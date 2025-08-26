@@ -1,0 +1,88 @@
+2025-08-24 12:40:59.439 +05:30 [INF] Now listening on: https://localhost:7174
+2025-08-24 12:40:59.459 +05:30 [INF] Now listening on: http://localhost:5019
+2025-08-24 12:40:59.511 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-24 12:40:59.511 +05:30 [INF] Hosting environment: Development
+2025-08-24 12:40:59.511 +05:30 [INF] Content root path: D:\Practice\DotNet8WebAPI
+2025-08-24 12:41:00.188 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/swagger/index.html - null null
+2025-08-24 12:41:00.340 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/swagger/index.html - 200 null text/html;charset=utf-8 156.7814ms
+2025-08-24 12:41:00.344 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/_framework/aspnetcore-browser-refresh.js - null null
+2025-08-24 12:41:00.350 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/_framework/aspnetcore-browser-refresh.js - 200 13778 application/javascript; charset=utf-8 5.61ms
+2025-08-24 12:41:00.354 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/_vs/browserLink - null null
+2025-08-24 12:41:00.386 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/_vs/browserLink - 200 null text/javascript; charset=UTF-8 33.0986ms
+2025-08-24 12:41:00.415 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/swagger/v1/swagger.json - null null
+2025-08-24 12:41:00.423 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 8.958ms
+2025-08-24 12:42:10.628 +05:30 [INF] Request starting HTTP/1.1 POST https://localhost:7174/api/users/login - application/json 61
+2025-08-24 12:42:11.229 +05:30 [INF] Executing endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:42:11.251 +05:30 [INF] Route matched with {action = "login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] login(DotNet8WebAPI.Model.AuthenticateRequest) on controller DotNet8WebAPI.Controllers.UsersController (DotNet8WebAPI).
+2025-08-24 12:42:22.186 +05:30 [INF] Inside the login method...
+2025-08-24 12:42:23.383 +05:30 [INF] Executed action DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI) in 12128.6027ms
+2025-08-24 12:42:23.388 +05:30 [INF] Executed endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:42:25.690 +05:30 [ERR] Unhandled exception occurred.
+System.DivideByZeroException: Attempted to divide by zero.
+   at DotNet8WebAPI.Controllers.UsersController.login(AuthenticateRequest model) in D:\Practice\DotNet8WebAPI\Controllers\UsersController.cs:line 52
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at DotNet8WebAPI.Helpers.JwtMiddleware.Invoke(HttpContext context, IUserService userService) in D:\Practice\DotNet8WebAPI\Helpers\JwtMiddleware.cs:line 29
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at DotNet8WebAPI.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\Practice\DotNet8WebAPI\Middlewares\ExceptionHandlingMiddleware.cs:line 23
+2025-08-24 12:42:33.634 +05:30 [INF] Request finished HTTP/1.1 POST https://localhost:7174/api/users/login - 500 null application/json 23006.1519ms
+2025-08-24 12:55:18.047 +05:30 [INF] Now listening on: https://localhost:7174
+2025-08-24 12:55:18.064 +05:30 [INF] Now listening on: http://localhost:5019
+2025-08-24 12:55:18.125 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-24 12:55:18.125 +05:30 [INF] Hosting environment: Development
+2025-08-24 12:55:18.125 +05:30 [INF] Content root path: D:\Practice\DotNet8WebAPI
+2025-08-24 12:55:18.564 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/swagger/index.html - null null
+2025-08-24 12:55:18.725 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/swagger/index.html - 200 null text/html;charset=utf-8 165.2439ms
+2025-08-24 12:55:18.746 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/_framework/aspnetcore-browser-refresh.js - null null
+2025-08-24 12:55:18.746 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/_vs/browserLink - null null
+2025-08-24 12:55:18.758 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/_framework/aspnetcore-browser-refresh.js - 200 13778 application/javascript; charset=utf-8 12.8875ms
+2025-08-24 12:55:18.788 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/_vs/browserLink - 200 null text/javascript; charset=UTF-8 42.7425ms
+2025-08-24 12:55:18.816 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7174/swagger/v1/swagger.json - null null
+2025-08-24 12:55:18.826 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7174/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 10.117ms
+2025-08-24 12:55:21.707 +05:30 [INF] Request starting HTTP/1.1 POST https://localhost:7174/api/users/login - application/json 61
+2025-08-24 12:55:42.649 +05:30 [INF] Executing endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:55:42.664 +05:30 [INF] Route matched with {action = "login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] login(DotNet8WebAPI.Model.AuthenticateRequest) on controller DotNet8WebAPI.Controllers.UsersController (DotNet8WebAPI).
+2025-08-24 12:55:57.039 +05:30 [INF] Inside the login method...
+2025-08-24 12:55:59.719 +05:30 [INF] Executed DbCommand (62ms) [Parameters=[@__model_Username_0='?' (Size = 4000), @__model_Password_1='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[FirstName], [u].[LastName], [u].[Password], [u].[Username], [u].[isActive]
+FROM [Users] AS [u]
+WHERE [u].[Username] = @__model_Username_0 AND [u].[Password] = @__model_Password_1
+2025-08-24 12:56:00.968 +05:30 [INF] Login completed...
+2025-08-24 12:56:01.849 +05:30 [INF] Executing OkObjectResult, writing value of type 'DotNet8WebAPI.Model.AuthenticateResponse'.
+2025-08-24 12:56:03.924 +05:30 [INF] Executed action DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI) in 21257.6117ms
+2025-08-24 12:56:03.925 +05:30 [INF] Executed endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:56:03.927 +05:30 [INF] Request finished HTTP/1.1 POST https://localhost:7174/api/users/login - 200 null application/json; charset=utf-8 42219.5744ms
+2025-08-24 12:56:20.363 +05:30 [INF] Request starting HTTP/1.1 POST https://localhost:7174/api/users/login - application/json 61
+2025-08-24 12:56:24.527 +05:30 [INF] Executing endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:56:24.530 +05:30 [INF] Route matched with {action = "login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] login(DotNet8WebAPI.Model.AuthenticateRequest) on controller DotNet8WebAPI.Controllers.UsersController (DotNet8WebAPI).
+2025-08-24 12:56:35.537 +05:30 [INF] Inside the login method...
+2025-08-24 12:56:36.622 +05:30 [INF] Executed action DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI) in 12092.1114ms
+2025-08-24 12:56:36.626 +05:30 [INF] Executed endpoint 'DotNet8WebAPI.Controllers.UsersController.login (DotNet8WebAPI)'
+2025-08-24 12:56:42.297 +05:30 [ERR] Unhandled exception occurred.
+System.DivideByZeroException: Attempted to divide by zero.
+   at DotNet8WebAPI.Controllers.UsersController.login(AuthenticateRequest model)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at DotNet8WebAPI.Helpers.JwtMiddleware.Invoke(HttpContext context, IUserService userService)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at DotNet8WebAPI.Middlewares.CorrelationIdMiddleware.InvokeAsync(HttpContext context)
+   at DotNet8WebAPI.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context)
+2025-08-24 12:56:44.763 +05:30 [INF] Request finished HTTP/1.1 POST https://localhost:7174/api/users/login - 500 null application/json 24400.1004ms
