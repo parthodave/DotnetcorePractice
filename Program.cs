@@ -32,7 +32,7 @@ builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddSingleton<IBookService, BookService>();
 //builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddMemoryCache();
 
 
 //builder.Services.AddTransient<IOurHeroService, OurHeroService>();

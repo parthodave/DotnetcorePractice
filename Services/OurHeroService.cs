@@ -1,22 +1,39 @@
 ﻿
 using DotNet8WebAPI.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DotNet8WebAPI.Services
 {
     public class OurHeroService : IOurHeroService
     {
+        private readonly IMemoryCache _cache;
         private readonly OurHeroDbContext _db;
-        public OurHeroService(OurHeroDbContext db)
+        public OurHeroService(OurHeroDbContext db, IMemoryCache cache)
         {
             _db = db;
+            _cache = cache;
         }
         public async Task<List<OurHero>> GetAllHeros(bool? isActive)
         {
-            if (isActive == null) { return await _db.OurHeros.ToListAsync(); }
+            string cacheKey = isActive == null ? "AllHeros" : $"Heros_Active_{isActive}";
 
-            return await _db.OurHeros.Where(obj => obj.isActive == isActive).ToListAsync();
+            if (!_cache.TryGetValue(cacheKey, out List<OurHero> heros))
+            {
+                if (isActive == null)
+                    heros = await _db.OurHeros.ToListAsync();
+                else
+                    heros = await _db.OurHeros.Where(obj => obj.isActive == isActive).ToListAsync();
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+                _cache.Set(cacheKey, heros, cacheEntryOptions);
+            }
+
+            return heros;
         }
+
 
         public async Task<OurHero?> GetHerosByID(int id)
         {
