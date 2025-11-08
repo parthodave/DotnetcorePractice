@@ -48,12 +48,9 @@ namespace DotNet8WebAPI.Controllers
         public async Task<IActionResult> login(AuthenticateRequest model)
         {
             _logger.LogInformation("Inside the login method...");
-             var ij = 0;
-             var jk = 25 / ij;
+            
             var response = await _userService.Authenticate(model);
            
-            //if (response == null)
-            //    return BadRequest(new { message = "Username or password is incorrect" });
             _logger.LogInformation("Login completed...");
             return Ok(response);
         }

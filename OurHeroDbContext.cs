@@ -10,10 +10,9 @@ namespace DotNet8WebAPI
 
         }
 
-        public DbSet<OurHero> OurHeros { get; set; }
-        public DbSet<User> Users { get; set; }
-
-        public DbSet<Book> Books { get; set; }
+        public virtual DbSet<OurHero> OurHeros { get; set; }
+        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Book> Books { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
