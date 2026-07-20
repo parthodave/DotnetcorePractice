@@ -2,7 +2,9 @@ using DotNet8WebAPI;
 using DotNet8WebAPI.Helpers;
 using DotNet8WebAPI.Model;
 using Azure.Identity;
-
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
+using Serilog.Sinks.ApplicationInsights;
 using DotNet8WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -14,12 +16,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using DotNet8WebAPI.Middlewares;
+using Microsoft.ApplicationInsights;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.ApplicationInsights(new TelemetryClient(), TelemetryConverter.Traces)
+    .MinimumLevel.Information()
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Host.UseSerilog();
 
@@ -92,23 +99,31 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string connectionString = string.Empty;
+//string connectionString = string.Empty;
+
+//builder.Configuration
+//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+//    .AddEnvironmentVariables();
+
+//connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+
+//if (builder.Environment.IsProduction())
+//{
+//    // Configure Key Vault
+//    var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
+//    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+
+//    connectionString = builder.Configuration["ConnectionString"];
+//}
 
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-
-if (builder.Environment.IsProduction())
-{
-    // Configure Key Vault
-    var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
-    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
-
-    connectionString = builder.Configuration["ConnectionString"];
-}
+string connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<OurHeroDbContext>(db => db.UseSqlServer(connectionString), ServiceLifetime.Singleton);
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
@@ -117,11 +132,8 @@ builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSet
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 //app.UseMiddleware<RequestLoggingMiddleware>();
