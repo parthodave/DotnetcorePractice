@@ -18,6 +18,7 @@ using Serilog;
 using Serilog.Context;
 using DotNet8WebAPI.Middlewares;
 using Microsoft.ApplicationInsights;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 // ===== PRODUCTION-GRADE LOGGING SETUP =====
 // Serilog enriches logs with context, environment, and correlation IDs
@@ -139,10 +140,25 @@ builder.Services.AddSwaggerGen();
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables();
+
+var keyVaultUrl = builder.Configuration["KeyVault:VaultUri"];
+
+if (!string.IsNullOrWhiteSpace(keyVaultUrl))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUrl),
+        new DefaultAzureCredential());
+}
 
 string connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' was not found in configuration or Key Vault.");
+}
 
 builder.Services.AddDbContext<OurHeroDbContext>(db => db.UseSqlServer(connectionString), ServiceLifetime.Singleton);
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
