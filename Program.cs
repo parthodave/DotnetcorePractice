@@ -15,14 +15,33 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Context;
 using DotNet8WebAPI.Middlewares;
 using Microsoft.ApplicationInsights;
 
+// ===== PRODUCTION-GRADE LOGGING SETUP =====
+// Serilog enriches logs with context, environment, and correlation IDs
+// This enables enterprise-level observability and troubleshooting
 Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
+    .Enrich.WithProperty("Version", "1.0.0")
+    .Enrich.WithProperty("MachineName", Environment.MachineName)
+    .Enrich.WithProperty("ThreadId", Environment.CurrentManagedThreadId)
+    .MinimumLevel.Information()
     .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
     .WriteTo.ApplicationInsights(new TelemetryClient(), TelemetryConverter.Traces)
-    .MinimumLevel.Information()
     .CreateLogger();
+
+try
+{
+    Log.Information("===== APPLICATION STARTUP INITIATED =====");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "===== APPLICATION TERMINATED UNEXPECTEDLY =====");
+    throw;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,9 +150,11 @@ builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSet
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ===== CONFIGURE HTTP PIPELINE =====
+// Enable Swagger in all environments so the API docs are available after Azure deployment.
 app.UseSwagger();
 app.UseSwaggerUI();
+Log.Information("Swagger UI enabled in {Environment} environment", app.Environment.EnvironmentName);
 
 app.UseHttpsRedirection();
 //app.UseMiddleware<RequestLoggingMiddleware>();
@@ -143,6 +164,52 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<JwtMiddleware>();
 app.UseCors("AllowAngularApp");
+
+// ===== HEALTH CHECK ENDPOINT =====
+// Production-grade health check for load balancers and Azure monitoring
+// Verifies database connectivity and app health
+app.MapGet("/health", async (OurHeroDbContext dbContext, TelemetryClient telemetryClient) =>
+{
+    try
+    {
+        // Check database connectivity
+        await dbContext.Database.ExecuteSqlAsync($"SELECT 1");
+
+        var response = new
+        {
+            status = "Healthy",
+            timestamp = DateTime.UtcNow,
+            environment = app.Environment.EnvironmentName,
+            version = "1.0.0"
+        };
+
+        telemetryClient.TrackEvent("HealthCheckPassed");
+        Log.Information("Health check passed - Database connectivity verified");
+
+        return Results.Ok(response);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Health check FAILED - Database connectivity issue");
+        telemetryClient.TrackEvent("HealthCheckFailed", new Dictionary<string, string> { { "Error", ex.Message } });
+
+        return Results.Json(new
+        {
+            status = "Unhealthy",
+            timestamp = DateTime.UtcNow,
+            error = ex.Message,
+            environment = app.Environment.EnvironmentName
+        }, statusCode: 503);
+    }
+})
+.WithName("HealthCheck")
+.Produces(200, typeof(object))
+.Produces(503, typeof(object))
+.WithDisplayName("System Health Check")
+.WithDescription("Returns health status of the API and database connectivity");
+
 app.MapControllers();
 
 app.Run();
+
+Log.Information("===== APPLICATION STOPPED GRACEFULLY =====");

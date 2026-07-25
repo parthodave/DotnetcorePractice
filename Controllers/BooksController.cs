@@ -3,6 +3,7 @@ using DotNet8WebAPI.Model;
 using DotNet8WebAPI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.ApplicationInsights;
 
 namespace DotNet8WebAPI.Controllers
 {
@@ -12,38 +13,100 @@ namespace DotNet8WebAPI.Controllers
     public class BooksController : Controller
     {
         private readonly IBookService _bookService;
-        public BooksController(IBookService bookService)
+        private readonly TelemetryClient _telemetryClient;
+        private readonly ILogger<BooksController> _logger;
+
+        public BooksController(IBookService bookService, TelemetryClient telemetryClient, ILogger<BooksController> logger)
         {
             _bookService = bookService;
+            _telemetryClient = telemetryClient;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllBook()
         {
-            var heros = await _bookService.GetAllBooks();
-            return Ok(heros);
+            _logger.LogInformation("BooksController: GetAllBooks operation initiated");
+            _telemetryClient.TrackEvent("Books.GetAll.Started");
+
+            try
+            {
+                var heros = await _bookService.GetAllBooks();
+
+                _telemetryClient.TrackEvent("Books.GetAll.Success", new Dictionary<string, string>
+                {
+                    { "BookCount", heros?.Count().ToString() ?? "0" }
+                });
+
+                _logger.LogInformation("Successfully retrieved {Count} books", heros?.Count() ?? 0);
+                return Ok(heros);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackEvent("Books.GetAll.Failed", new Dictionary<string, string>
+                {
+                    { "Error", ex.Message }
+                });
+                throw;
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
+            _logger.LogInformation("BooksController: Get book by ID {BookId}", id);
+            _telemetryClient.TrackEvent("Books.GetById.Started", new Dictionary<string, string>
+            {
+                { "BookId", id.ToString() }
+            });
+
             var hero = await _bookService.GetBookByID(id);
             if (hero == null)
             {
+                _telemetryClient.TrackEvent("Books.GetById.NotFound", new Dictionary<string, string>
+                {
+                    { "BookId", id.ToString() }
+                });
+                _logger.LogWarning("Book with ID {BookId} not found", id);
                 return NotFound();
             }
+
+            _telemetryClient.TrackEvent("Books.GetById.Success", new Dictionary<string, string>
+            {
+                { "BookId", id.ToString() },
+                { "BookTitle", hero.BookName ?? "N/A" }
+            });
+
             return Ok(hero);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddBook([FromBody] Book heroObject)
         {
+            _logger.LogInformation("BooksController: AddBook operation initiated for '{BookName}'", heroObject?.BookName);
+            _telemetryClient.TrackEvent("Books.Add.Started", new Dictionary<string, string>
+            {
+                { "BookTitle", heroObject?.BookName ?? "N/A" }
+            });
+
             var hero = await _bookService.AddBook(heroObject);
 
             if (hero == null)
             {
+                _telemetryClient.TrackEvent("Books.Add.Failed", new Dictionary<string, string>
+                {
+                    { "BookTitle", heroObject?.BookName ?? "N/A" }
+                });
+                _logger.LogError("Failed to add book '{BookName}'", heroObject?.BookName);
                 return BadRequest();
             }
+
+            _telemetryClient.TrackEvent("Books.Add.Success", new Dictionary<string, string>
+            {
+                { "BookId", hero!.Id.ToString() },
+                { "BookTitle", hero.BookName ?? "N/A" }
+            });
+            _logger.LogInformation("Successfully created book with ID {BookId}", hero.Id);
 
             return Ok(new
             {
@@ -56,11 +119,30 @@ namespace DotNet8WebAPI.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Put([FromRoute] int id, [FromBody] Book heroObject)
         {
+            _logger.LogInformation("BooksController: UpdateBook operation initiated for ID {BookId}", id);
+            _telemetryClient.TrackEvent("Books.Update.Started", new Dictionary<string, string>
+            {
+                { "BookId", id.ToString() },
+                { "BookTitle", heroObject?.BookName ?? "N/A" }
+            });
+
             var hero = await _bookService.UpdateBook(id, heroObject);
             if (hero == null)
             {
+                _telemetryClient.TrackEvent("Books.Update.NotFound", new Dictionary<string, string>
+                {
+                    { "BookId", id.ToString() }
+                });
+                _logger.LogWarning("Book with ID {BookId} not found for update", id);
                 return NotFound();
             }
+
+            _telemetryClient.TrackEvent("Books.Update.Success", new Dictionary<string, string>
+            {
+                { "BookId", hero!.Id.ToString() },
+                { "BookTitle", hero.BookName ?? "N/A" }
+            });
+            _logger.LogInformation("Successfully updated book with ID {BookId}", hero.Id);
 
             return Ok(new
             {
@@ -73,10 +155,27 @@ namespace DotNet8WebAPI.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
+            _logger.LogInformation("BooksController: DeleteBook operation initiated for ID {BookId}", id);
+            _telemetryClient.TrackEvent("Books.Delete.Started", new Dictionary<string, string>
+            {
+                { "BookId", id.ToString() }
+            });
+
             if (!await _bookService.DeleteBookById(id))
             {
+                _telemetryClient.TrackEvent("Books.Delete.NotFound", new Dictionary<string, string>
+                {
+                    { "BookId", id.ToString() }
+                });
+                _logger.LogWarning("Book with ID {BookId} not found for deletion", id);
                 return NotFound();
             }
+
+            _telemetryClient.TrackEvent("Books.Delete.Success", new Dictionary<string, string>
+            {
+                { "BookId", id.ToString() }
+            });
+            _logger.LogInformation("Successfully deleted book with ID {BookId}", id);
 
             return Ok(new
             {
