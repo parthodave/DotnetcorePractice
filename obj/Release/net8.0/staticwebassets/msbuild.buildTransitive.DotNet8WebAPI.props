@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\DotNet8WebAPI.props" />
-</Project>

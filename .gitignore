@@ -1,6 +1,6 @@
 # Build output
-[Bb]in/
-[Oo]bj/
+/bin/
+/obj/
 
 # Visual Studio
 .vs/
@@ -10,11 +10,11 @@
 *.rsuser
 *.suo
 
+# Logs
 Logs/
 
-# Publish Profiles
-Properties/PublishProfiles/*.pubxml.user
-Properties/PublishProfiles/*.pubxml
+# Properties folder
+/Properties/
 
 # Azure Service Dependencies
 ServiceDependencies/
@@ -22,4 +22,4 @@ serviceDependencies*.json
 serviceDependencies*.json.user
 
 # Publish folder
-publish/
+/publish/
