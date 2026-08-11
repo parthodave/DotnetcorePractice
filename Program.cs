@@ -1,24 +1,24 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
+using Azure.Security.KeyVault.Secrets;
 using DotNet8WebAPI;
 using DotNet8WebAPI.Helpers;
+using DotNet8WebAPI.Middlewares;
 using DotNet8WebAPI.Model;
-using Azure.Identity;
+using DotNet8WebAPI.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
-using Serilog.Sinks.ApplicationInsights;
-using DotNet8WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Context;
-using DotNet8WebAPI.Middlewares;
-using Microsoft.ApplicationInsights;
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Serilog.Sinks.ApplicationInsights;
 
 // ===== PRODUCTION-GRADE LOGGING SETUP =====
 // Serilog enriches logs with context, environment, and correlation IDs
@@ -55,15 +55,14 @@ builder.Host.UseSerilog();
 
 //builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
-builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
-builder.Services.AddSingleton<IBookService, BookService>();
+builder.Services.AddScoped<IOurHeroService, OurHeroService>();
+builder.Services.AddScoped<IBookService, BookService>();
 //builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddMemoryCache();
 
 
 //builder.Services.AddTransient<IOurHeroService, OurHeroService>();
-builder.Services.AddScoped<IOurHeroService, OurHeroService>();
 
 builder.Services.AddSwaggerGen(swagger =>
 {
@@ -159,12 +158,33 @@ if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("Connection string 'DefaultConnection' was not found in configuration or Key Vault.");
 }
+builder.Services.AddDbContext<OurHeroDbContext>(db => db.UseSqlServer(connectionString));
 
-builder.Services.AddDbContext<OurHeroDbContext>(db => db.UseSqlServer(connectionString), ServiceLifetime.Singleton);
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
+var serviceBusNamespace = builder.Configuration["ServiceBus:Namespace"];
+
+if (string.IsNullOrWhiteSpace(serviceBusNamespace))
+{
+    throw new InvalidOperationException(
+        "Service Bus namespace is not configured.");
+}
+
+builder.Services.AddSingleton<ServiceBusClient>(_ =>
+    new ServiceBusClient(
+        serviceBusNamespace,
+        new DefaultAzureCredential()));
+
+builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<OurHeroDbContext>();
+    dbContext.Database.Migrate();
+}
 
 // ===== CONFIGURE HTTP PIPELINE =====
 // Enable Swagger in all environments so the API docs are available after Azure deployment.

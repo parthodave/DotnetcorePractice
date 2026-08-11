@@ -1,15 +1,22 @@
 ﻿using DotNet8WebAPI.Model;
 using Microsoft.EntityFrameworkCore;
+using DotNet8WebAPI.Messages;
 
 namespace DotNet8WebAPI.Services
 {
     public class BookService : IBookService
     {
         private readonly OurHeroDbContext _db;
-        public BookService(OurHeroDbContext db)
+        private readonly IServiceBusService _serviceBusService;
+
+        public BookService(
+            OurHeroDbContext db,
+            IServiceBusService serviceBusService)
         {
             _db = db;
+            _serviceBusService = serviceBusService;
         }
+
         public async Task<List<Book>> GetAllBooks()
         {
              return await _db.Books.ToListAsync();
