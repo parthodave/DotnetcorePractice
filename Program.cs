@@ -3,7 +3,10 @@ using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Azure.Security.KeyVault.Secrets;
 using DotNet8WebAPI;
+using DotNet8WebAPI.Application.Books;
 using DotNet8WebAPI.Helpers;
+using DotNet8WebAPI.Infrastructure.Messaging;
+using DotNet8WebAPI.Infrastructure.Messaging.Consumers;
 using DotNet8WebAPI.Middlewares;
 using DotNet8WebAPI.Model;
 using DotNet8WebAPI.Services;
@@ -158,16 +161,24 @@ if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("Connection string 'DefaultConnection' was not found in configuration or Key Vault.");
 }
-builder.Services.AddDbContext<OurHeroDbContext>(db => db.UseSqlServer(connectionString));
+builder.Services.AddDbContext<OurHeroDbContext>(db =>
+    db.UseSqlServer(connectionString, sqlServerOptions =>
+        sqlServerOptions.EnableRetryOnFailure()));
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
-var serviceBusNamespace = builder.Configuration["ServiceBus:Namespace"];
+var serviceBusNamespace = builder.Configuration["ServiceBus:Namespace"]?.Trim();
 
 if (string.IsNullOrWhiteSpace(serviceBusNamespace))
 {
     throw new InvalidOperationException(
-        "Service Bus namespace is not configured.");
+        "Service Bus fully qualified namespace is not configured.");
+}
+
+if (Uri.CheckHostName(serviceBusNamespace) != UriHostNameType.Dns || !serviceBusNamespace.Contains('.'))
+{
+    throw new InvalidOperationException(
+        "Service Bus namespace must be a fully qualified host name, for example '<namespace>.servicebus.windows.net'.");
 }
 
 builder.Services.AddSingleton<ServiceBusClient>(_ =>
@@ -176,6 +187,8 @@ builder.Services.AddSingleton<ServiceBusClient>(_ =>
         new DefaultAzureCredential()));
 
 builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
+builder.Services.AddHostedService<BookCommandConsumerService>();
+builder.Services.AddHostedService<BookReadRequestConsumerService>();
 
 var app = builder.Build();
 

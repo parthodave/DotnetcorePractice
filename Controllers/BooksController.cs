@@ -1,6 +1,6 @@
 ﻿using DotNet8WebAPI.Helpers;
+using DotNet8WebAPI.Application.Books;
 using DotNet8WebAPI.Model;
-using DotNet8WebAPI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.ApplicationInsights;
@@ -91,27 +91,20 @@ namespace DotNet8WebAPI.Controllers
 
             var hero = await _bookService.AddBook(heroObject);
 
-            if (hero == null)
+            _telemetryClient.TrackEvent("Books.Add.Queued", new Dictionary<string, string>
             {
-                _telemetryClient.TrackEvent("Books.Add.Failed", new Dictionary<string, string>
-                {
-                    { "BookTitle", heroObject?.BookName ?? "N/A" }
-                });
-                _logger.LogError("Failed to add book '{BookName}'", heroObject?.BookName);
-                return BadRequest();
-            }
-
-            _telemetryClient.TrackEvent("Books.Add.Success", new Dictionary<string, string>
-            {
-                { "BookId", hero!.Id.ToString() },
+                { "MessageId", hero.MessageId.ToString() },
                 { "BookTitle", hero.BookName ?? "N/A" }
             });
-            _logger.LogInformation("Successfully created book with ID {BookId}", hero.Id);
+            _logger.LogInformation("Queued book creation for '{BookName}' with message {MessageId}", hero.BookName, hero.MessageId);
 
-            return Ok(new
+            return Accepted(new
             {
-                message = "Book Created Successfully!!!",
-                id = hero!.Id
+                message = "Book creation queued successfully. It will be persisted by the Service Bus consumer.",
+                messageId = hero.MessageId,
+                hero.BookName,
+                hero.BookAuthor,
+                hero.CreatedOnUtc
             });
         }
 
@@ -142,12 +135,13 @@ namespace DotNet8WebAPI.Controllers
                 { "BookId", hero!.Id.ToString() },
                 { "BookTitle", hero.BookName ?? "N/A" }
             });
-            _logger.LogInformation("Successfully updated book with ID {BookId}", hero.Id);
+            _logger.LogInformation("Successfully queued update for book with ID {BookId}", hero.Id);
 
-            return Ok(new
+            return Accepted(new
             {
-                message = "Book Updated Successfully!!!",
-                id = hero!.Id
+                message = "Book update queued successfully. It will be persisted by the Service Bus consumer.",
+                messageId = hero.MessageId,
+                id = hero.Id
             });
         }
 
@@ -175,11 +169,11 @@ namespace DotNet8WebAPI.Controllers
             {
                 { "BookId", id.ToString() }
             });
-            _logger.LogInformation("Successfully deleted book with ID {BookId}", id);
+            _logger.LogInformation("Successfully queued deletion for book with ID {BookId}", id);
 
-            return Ok(new
+            return Accepted(new
             {
-                message = "Book Deleted Successfully!!!",
+                message = "Book deletion queued successfully. It will be persisted by the Service Bus consumer.",
                 id = id
             });
         }
