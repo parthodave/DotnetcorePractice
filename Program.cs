@@ -11,6 +11,7 @@ using DotNet8WebAPI.Middlewares;
 using DotNet8WebAPI.Model;
 using DotNet8WebAPI.Services;
 using DotNet8WebAPI.Services.AI;
+using DotNet8WebAPI.Services.ApplicationHealth;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -61,6 +62,7 @@ builder.Host.UseSerilog();
 
 builder.Services.AddScoped<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IApplicationHealthService, ApplicationHealthService>();
 //builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAiService, AiService>();
@@ -219,39 +221,28 @@ app.UseCors("AllowAngularApp");
 // ===== HEALTH CHECK ENDPOINT =====
 // Production-grade health check for load balancers and Azure monitoring
 // Verifies database connectivity and app health
-app.MapGet("/health", async (OurHeroDbContext dbContext, TelemetryClient telemetryClient) =>
+app.MapGet("/health", async (IApplicationHealthService healthService) =>
 {
-    try
+    var health = await healthService.CheckAsync();
+
+    if (health.Status == "Healthy")
     {
-        // Check database connectivity
-        await dbContext.Database.ExecuteSqlAsync($"SELECT 1");
-
-        var response = new
+        return Results.Ok(new
         {
-            status = "Healthy",
-            timestamp = DateTime.UtcNow,
-            environment = app.Environment.EnvironmentName,
-            version = "1.0.0"
-        };
-
-        telemetryClient.TrackEvent("HealthCheckPassed");
-        Log.Information("Health check passed - Database connectivity verified");
-
-        return Results.Ok(response);
+            status = health.Status,
+            timestamp = health.Timestamp,
+            environment = health.Environment,
+            version = health.Version
+        });
     }
-    catch (Exception ex)
+
+    return Results.Json(new
     {
-        Log.Error(ex, "Health check FAILED - Database connectivity issue");
-        telemetryClient.TrackEvent("HealthCheckFailed", new Dictionary<string, string> { { "Error", ex.Message } });
-
-        return Results.Json(new
-        {
-            status = "Unhealthy",
-            timestamp = DateTime.UtcNow,
-            error = ex.Message,
-            environment = app.Environment.EnvironmentName
-        }, statusCode: 503);
-    }
+        status = health.Status,
+        timestamp = health.Timestamp,
+        error = health.Message,
+        environment = health.Environment
+    }, statusCode: 503);
 })
 .WithName("HealthCheck")
 .Produces(200, typeof(object))
