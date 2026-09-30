@@ -10,6 +10,7 @@ using DotNet8WebAPI.Infrastructure.Messaging.Consumers;
 using DotNet8WebAPI.Middlewares;
 using DotNet8WebAPI.Model;
 using DotNet8WebAPI.Services;
+using DotNet8WebAPI.Services.AI;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -62,6 +63,7 @@ builder.Services.AddScoped<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IBookService, BookService>();
 //builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddMemoryCache();
 
 
