@@ -13,10 +13,10 @@ namespace DotNet8WebAPI.Application.Books
             _serviceBusService = serviceBusService;
         }
 
-        public async Task<List<Book>> GetAllBooks()
+        public async Task<List<Book>> GetAllBooks(CancellationToken cancellationToken = default)
         {
             var request = new BookReadRequestMessage { Action = BookReadAction.GetAll };
-            var response = await _serviceBusService.SendBookReadRequestAsync(request);
+            var response = await _serviceBusService.SendBookReadRequestAsync(request, cancellationToken);
             return response.Books;
         }
 

@@ -5,7 +5,7 @@ namespace DotNet8WebAPI.Application.Books
 {
     public interface IBookService
     {
-        Task<List<Book>> GetAllBooks();
+        Task<List<Book>> GetAllBooks(CancellationToken cancellationToken = default);
 
         Task<Book?> GetBookByID(int id);
 

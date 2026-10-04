@@ -4,5 +4,6 @@ namespace DotNet8WebAPI.Services.ApplicationHealth;
 
 public interface IApplicationHealthService
 {
-    Task<ApplicationHealthResult> CheckAsync();
+    Task<ApplicationHealthResult> CheckAsync(
+        CancellationToken cancellationToken = default);
 }

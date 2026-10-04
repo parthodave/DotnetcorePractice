@@ -26,13 +26,14 @@ public sealed class ApplicationHealthService : IApplicationHealthService
         _environment = environment;
     }
 
-    public async Task<ApplicationHealthResult> CheckAsync()
+    public async Task<ApplicationHealthResult> CheckAsync(
+        CancellationToken cancellationToken = default)
     {
         var timestamp = DateTime.UtcNow;
 
         try
         {
-            await _dbContext.Database.ExecuteSqlAsync($"SELECT 1");
+            await _dbContext.Database.ExecuteSqlAsync($"SELECT 1", cancellationToken);
 
             _telemetryClient.TrackEvent("HealthCheckPassed");
             _logger.LogInformation(
@@ -41,11 +42,16 @@ public sealed class ApplicationHealthService : IApplicationHealthService
             return new ApplicationHealthResult
             {
                 Status = "Healthy",
-                Timestamp = timestamp,
+                TimestampUtc = timestamp,
                 Environment = _environment.EnvironmentName,
                 Version = Version,
-                DatabaseStatus = "Healthy"
+                DatabaseStatus = "Healthy",
+                Message = "Database connectivity verified."
             };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -62,7 +68,7 @@ public sealed class ApplicationHealthService : IApplicationHealthService
             return new ApplicationHealthResult
             {
                 Status = "Unhealthy",
-                Timestamp = DateTime.UtcNow,
+                TimestampUtc = DateTime.UtcNow,
                 Environment = _environment.EnvironmentName,
                 Version = Version,
                 DatabaseStatus = "Unhealthy",

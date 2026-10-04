@@ -15,13 +15,31 @@ public class AiController : ControllerBase
     }
 
     [HttpPost("ask")]
-    public async Task<IActionResult> Ask([FromBody] string message)
+    public async Task<IActionResult> Ask(
+        [FromBody] string message,
+        CancellationToken cancellationToken)
     {
-        var response = await _aiService.AskAsync(message);
-
-        return Ok(new
+        if (string.IsNullOrWhiteSpace(message))
         {
-            response
-        });
+            return BadRequest(new { error = "The message cannot be empty." });
+        }
+
+        var correlationId = Request.Headers["X-Correlation-ID"].ToString();
+        try
+        {
+            var response = await _aiService.AskAsync(
+                message,
+                cancellationToken,
+                correlationId);
+
+            return Ok(new
+            {
+                response
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

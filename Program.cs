@@ -11,7 +11,10 @@ using DotNet8WebAPI.Middlewares;
 using DotNet8WebAPI.Model;
 using DotNet8WebAPI.Services;
 using DotNet8WebAPI.Services.AI;
+using DotNet8WebAPI.Services.ApplicationErrors;
 using DotNet8WebAPI.Services.ApplicationHealth;
+using DotNet8WebAPI.Services.Knowledge;
+using Azure.Monitor.Query;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -63,6 +66,21 @@ builder.Host.UseSerilog();
 builder.Services.AddScoped<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IApplicationHealthService, ApplicationHealthService>();
+builder.Services.AddScoped<IApplicationErrorService, ApplicationErrorService>();
+builder.Services.AddScoped<IKnowledgeService, LocalMarkdownKnowledgeService>();
+builder.Services.AddSingleton<LogsQueryClient>(_ =>
+    new LogsQueryClient(new DefaultAzureCredential()));
+builder.Services.AddSingleton<IApplicationInsightsLogQuery, AzureMonitorApplicationInsightsLogQuery>();
+builder.Services.Configure<AiAgentOptions>(builder.Configuration.GetSection("Agent"));
+builder.Services.AddSingleton<IAiModelClient, OpenAiResponsesModelClient>();
+builder.Services.AddScoped<IAgentToolExecutor>(serviceProvider =>
+    new AgentToolExecutor(
+        ApplicationAgentTools.Create(
+            serviceProvider.GetRequiredService<IBookService>(),
+            serviceProvider.GetRequiredService<IApplicationHealthService>(),
+            serviceProvider.GetRequiredService<IApplicationErrorService>(),
+            serviceProvider.GetRequiredService<IKnowledgeService>()),
+        serviceProvider.GetRequiredService<ILogger<AgentToolExecutor>>()));
 //builder.Services.AddSingleton<IOurHeroService, OurHeroService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAiService, AiService>();
@@ -150,9 +168,17 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var keyVaultUrl = builder.Configuration["KeyVault:VaultUri"];
+var keyVaultEnabled = builder.Configuration.GetValue<bool?>("KeyVault:Enabled")
+    ?? !string.IsNullOrWhiteSpace(keyVaultUrl);
 
-if (!string.IsNullOrWhiteSpace(keyVaultUrl))
+if (keyVaultEnabled)
 {
+    if (string.IsNullOrWhiteSpace(keyVaultUrl))
+    {
+        throw new InvalidOperationException(
+            "Key Vault is enabled but 'KeyVault:VaultUri' is not configured.");
+    }
+
     builder.Configuration.AddAzureKeyVault(
         new Uri(keyVaultUrl),
         new DefaultAzureCredential());
@@ -198,9 +224,19 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<OurHeroDbContext>();
-    dbContext.Database.Migrate();
+    var applyMigrationsOnStartup = builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
+
+    if (applyMigrationsOnStartup)
+    {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OurHeroDbContext>();
+        dbContext.Database.Migrate();
+    }
+    else
+    {
+        Log.Warning(
+            "Skipping automatic database migrations. Set Database:ApplyMigrationsOnStartup=true only after validating the target database schema and EF migration history. Database-backed endpoints may fail if the schema is not current.");
+    }
 }
 
 // ===== CONFIGURE HTTP PIPELINE =====
@@ -230,7 +266,7 @@ app.MapGet("/health", async (IApplicationHealthService healthService) =>
         return Results.Ok(new
         {
             status = health.Status,
-            timestamp = health.Timestamp,
+            timestamp = health.TimestampUtc,
             environment = health.Environment,
             version = health.Version
         });
@@ -239,7 +275,7 @@ app.MapGet("/health", async (IApplicationHealthService healthService) =>
     return Results.Json(new
     {
         status = health.Status,
-        timestamp = health.Timestamp,
+        timestamp = health.TimestampUtc,
         error = health.Message,
         environment = health.Environment
     }, statusCode: 503);

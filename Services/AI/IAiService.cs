@@ -2,5 +2,8 @@
 
 public interface IAiService
 {
-    Task<string> AskAsync(string message);
+    Task<string> AskAsync(
+        string message,
+        CancellationToken cancellationToken = default,
+        string? correlationId = null);
 }
